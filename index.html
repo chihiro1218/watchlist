@@ -33,16 +33,22 @@
       margin-bottom: 24px;
     }
 
-    .form input {
+    .form input, .form textarea {
       padding: 10px 14px;
       border: 1px solid #ddd;
       border-radius: 8px;
       font-size: 1rem;
       outline: none;
+      font-family: inherit;
       transition: border-color 0.2s;
     }
 
-    .form input:focus { border-color: #4f8ef7; }
+    .form input:focus, .form textarea:focus { border-color: #4f8ef7; }
+
+    .form textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
 
     .form button {
       padding: 10px;
@@ -57,17 +63,58 @@
 
     .form button:hover { background: #3a7de0; }
 
-    ul { list-style: none; }
+    /* グループ */
+    .group { margin-bottom: 16px; }
 
-    li {
+    .group-header {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 12px 6px;
+      gap: 8px;
+      padding: 8px 6px;
+      background: #f0f4ff;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .group-header:hover { background: #e4ecff; }
+
+    .group-name {
+      flex: 1;
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #3a7de0;
+    }
+
+    .group-count {
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    .toggle-icon {
+      font-size: 0.75rem;
+      color: #aaa;
+      transition: transform 0.2s;
+    }
+
+    .toggle-icon.collapsed { transform: rotate(-90deg); }
+
+    .group-items { list-style: none; }
+
+    /* アイテム */
+    li {
       border-bottom: 1px solid #f0f0f0;
     }
 
     li:last-child { border-bottom: none; }
+
+    .item-main {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 6px 10px 16px;
+    }
 
     li input[type="checkbox"] {
       width: 18px;
@@ -77,8 +124,9 @@
       accent-color: #4f8ef7;
     }
 
+    .item-info { flex: 1; min-width: 0; }
+
     .title {
-      flex: 1;
       font-size: 0.95rem;
       color: #333;
       word-break: break-all;
@@ -89,39 +137,99 @@
       color: #aaa;
     }
 
+    .memo {
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 2px;
+      word-break: break-all;
+      white-space: pre-wrap;
+    }
+
+    .item-btns {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
     .open-btn {
-      padding: 6px 12px;
+      padding: 5px 10px;
       background: #4f8ef7;
       color: white;
       border: none;
       border-radius: 6px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       cursor: pointer;
-      flex-shrink: 0;
       transition: background 0.2s;
     }
 
     .open-btn:hover { background: #3a7de0; }
 
-    .open-btn:disabled {
-      background: #ccc;
-      cursor: default;
-    }
-
-    .delete-btn {
+    .icon-btn {
       background: none;
       border: none;
       color: #ccc;
-      font-size: 1.1rem;
+      font-size: 1rem;
       cursor: pointer;
       padding: 3px 6px;
       border-radius: 4px;
-      flex-shrink: 0;
       transition: color 0.15s;
     }
 
-    .delete-btn:hover { color: #e55; }
+    .icon-btn.edit:hover   { color: #4f8ef7; }
+    .icon-btn.delete:hover { color: #e55; }
 
+    /* インライン編集 */
+    .item-edit {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 10px 6px 10px 16px;
+    }
+
+    .item-edit input, .item-edit textarea {
+      padding: 6px 10px;
+      border: 1px solid #4f8ef7;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .item-edit textarea {
+      resize: vertical;
+      min-height: 50px;
+    }
+
+    .edit-btns {
+      display: flex;
+      gap: 6px;
+    }
+
+    .save-btn {
+      padding: 5px 14px;
+      background: #3cb87a;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .save-btn:hover { background: #2da86a; }
+
+    .cancel-btn {
+      padding: 5px 14px;
+      background: #eee;
+      color: #555;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .cancel-btn:hover { background: #ddd; }
+
+    /* フッター */
     .footer {
       margin-top: 16px;
       font-size: 0.85rem;
@@ -142,78 +250,228 @@
     <h1>視聴リスト</h1>
 
     <div class="form">
-      <input type="text" id="title-input" placeholder="タイトル（例：ドラマA 第1話）" />
+      <input type="text" id="group-input" placeholder="グループ名（例：ドラマA）" list="group-list" />
+      <datalist id="group-list"></datalist>
+      <input type="text" id="title-input" placeholder="タイトル（例：第1話）" />
       <input type="url"  id="url-input"   placeholder="URL（例：https://tver.jp/...）" />
+      <textarea id="memo-input" placeholder="メモ（任意）"></textarea>
       <button onclick="addItem()">追加</button>
     </div>
 
-    <ul id="watch-list"></ul>
+    <div id="watch-list"></div>
     <p class="empty" id="empty-msg">リストに番組がありません</p>
-
     <div class="footer" id="count-msg"></div>
   </div>
 
   <script>
+    const groupInput = document.getElementById('group-input');
     const titleInput = document.getElementById('title-input');
     const urlInput   = document.getElementById('url-input');
-    const list       = document.getElementById('watch-list');
+    const memoInput  = document.getElementById('memo-input');
+    const listEl     = document.getElementById('watch-list');
     const emptyMsg   = document.getElementById('empty-msg');
     const countMsg   = document.getElementById('count-msg');
+    const groupDatalist = document.getElementById('group-list');
 
-    let items = JSON.parse(localStorage.getItem('watchlist') || '[]');
+    let items     = JSON.parse(localStorage.getItem('watchlist') || '[]');
+    let collapsed = JSON.parse(localStorage.getItem('watchlist-collapsed') || '{}');
+    let editIdx   = null;
 
     function save() {
       localStorage.setItem('watchlist', JSON.stringify(items));
+      localStorage.setItem('watchlist-collapsed', JSON.stringify(collapsed));
     }
 
-    function render() {
-      list.innerHTML = '';
-      emptyMsg.style.display = items.length === 0 ? 'block' : 'none';
+    function groupNames() {
+      return [...new Set(items.map(i => i.group || ''))].filter(Boolean);
+    }
 
-      const unwatched = items.filter(i => !i.watched).length;
-      countMsg.textContent = items.length > 0 ? `未視聴 ${unwatched} / 全 ${items.length} 件` : '';
-
-      items.forEach((item, i) => {
-        const li = document.createElement('li');
-
-        const cb = document.createElement('input');
-        cb.type    = 'checkbox';
-        cb.checked = item.watched;
-        cb.title   = '視聴済みにする';
-        cb.onchange = () => { items[i].watched = cb.checked; save(); render(); };
-
-        const span = document.createElement('span');
-        span.className   = 'title' + (item.watched ? ' watched' : '');
-        span.textContent = item.title;
-
-        const openBtn = document.createElement('button');
-        openBtn.className   = 'open-btn';
-        openBtn.textContent = '開く';
-        openBtn.onclick     = () => window.open(item.url, '_blank');
-
-        const delBtn = document.createElement('button');
-        delBtn.className   = 'delete-btn';
-        delBtn.textContent = '✕';
-        delBtn.title       = '削除';
-        delBtn.onclick     = () => { items.splice(i, 1); save(); render(); };
-
-        li.append(cb, span, openBtn, delBtn);
-        list.appendChild(li);
+    function updateDatalist() {
+      groupDatalist.innerHTML = '';
+      groupNames().forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g;
+        groupDatalist.appendChild(opt);
       });
     }
 
+    function render() {
+      listEl.innerHTML = '';
+      updateDatalist();
+
+      const total     = items.length;
+      const unwatched = items.filter(i => !i.watched).length;
+      emptyMsg.style.display = total === 0 ? 'block' : 'none';
+      countMsg.textContent   = total > 0 ? `未視聴 ${unwatched} / 全 ${total} 件` : '';
+
+      // グループ別に整理
+      const groups = {};
+      items.forEach((item, i) => {
+        const g = item.group || '（グループなし）';
+        if (!groups[g]) groups[g] = [];
+        groups[g].push({ ...item, i });
+      });
+
+      Object.entries(groups).forEach(([groupName, groupItems]) => {
+        const section = document.createElement('div');
+        section.className = 'group';
+
+        // グループヘッダー
+        const header = document.createElement('div');
+        header.className = 'group-header';
+
+        const icon = document.createElement('span');
+        icon.className = 'toggle-icon' + (collapsed[groupName] ? ' collapsed' : '');
+        icon.textContent = '▼';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className   = 'group-name';
+        nameSpan.textContent = groupName;
+
+        const unwatchedCount = groupItems.filter(i => !i.watched).length;
+        const countSpan = document.createElement('span');
+        countSpan.className   = 'group-count';
+        countSpan.textContent = `未視聴 ${unwatchedCount}/${groupItems.length}`;
+
+        header.append(icon, nameSpan, countSpan);
+        header.onclick = () => {
+          collapsed[groupName] = !collapsed[groupName];
+          save();
+          render();
+        };
+
+        // アイテムリスト
+        const ul = document.createElement('ul');
+        ul.className = 'group-items';
+        ul.style.display = collapsed[groupName] ? 'none' : 'block';
+
+        groupItems.forEach(({ title, url, memo, watched, i }) => {
+          const li = document.createElement('li');
+
+          if (editIdx === i) {
+            // 編集モード
+            const editDiv = document.createElement('div');
+            editDiv.className = 'item-edit';
+
+            const eTitle = document.createElement('input');
+            eTitle.type  = 'text';
+            eTitle.id    = 'edit-title-' + i;
+            eTitle.value = title;
+
+            const eUrl = document.createElement('input');
+            eUrl.type  = 'url';
+            eUrl.id    = 'edit-url-' + i;
+            eUrl.value = url;
+
+            const eMemo = document.createElement('textarea');
+            eMemo.id        = 'edit-memo-' + i;
+            eMemo.value     = memo || '';
+            eMemo.placeholder = 'メモ（任意）';
+
+            const btns = document.createElement('div');
+            btns.className = 'edit-btns';
+
+            const saveBtn = document.createElement('button');
+            saveBtn.className   = 'save-btn';
+            saveBtn.textContent = '保存';
+            saveBtn.onclick     = () => saveEdit(i);
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className   = 'cancel-btn';
+            cancelBtn.textContent = 'キャンセル';
+            cancelBtn.onclick     = () => { editIdx = null; render(); };
+
+            btns.append(saveBtn, cancelBtn);
+            editDiv.append(eTitle, eUrl, eMemo, btns);
+            li.appendChild(editDiv);
+
+          } else {
+            // 表示モード
+            const mainDiv = document.createElement('div');
+            mainDiv.className = 'item-main';
+
+            const cb = document.createElement('input');
+            cb.type     = 'checkbox';
+            cb.checked  = watched;
+            cb.title    = '視聴済みにする';
+            cb.onchange = () => { items[i].watched = cb.checked; save(); render(); };
+
+            const info = document.createElement('div');
+            info.className = 'item-info';
+
+            const titleSpan = document.createElement('span');
+            titleSpan.className   = 'title' + (watched ? ' watched' : '');
+            titleSpan.textContent = title;
+            info.appendChild(titleSpan);
+
+            if (memo) {
+              const memoSpan = document.createElement('div');
+              memoSpan.className   = 'memo';
+              memoSpan.textContent = memo;
+              info.appendChild(memoSpan);
+            }
+
+            const btns = document.createElement('div');
+            btns.className = 'item-btns';
+
+            const openBtn = document.createElement('button');
+            openBtn.className   = 'open-btn';
+            openBtn.textContent = '開く';
+            openBtn.onclick     = () => window.open(url, '_blank');
+
+            const editBtn = document.createElement('button');
+            editBtn.className   = 'icon-btn edit';
+            editBtn.title       = '編集';
+            editBtn.textContent = '✎';
+            editBtn.onclick     = () => { editIdx = i; render(); document.getElementById('edit-title-' + i)?.focus(); };
+
+            const delBtn = document.createElement('button');
+            delBtn.className   = 'icon-btn delete';
+            delBtn.title       = '削除';
+            delBtn.textContent = '✕';
+            delBtn.onclick     = () => { items.splice(i, 1); if (editIdx === i) editIdx = null; save(); render(); };
+
+            btns.append(openBtn, editBtn, delBtn);
+            mainDiv.append(cb, info, btns);
+            li.appendChild(mainDiv);
+          }
+
+          ul.appendChild(li);
+        });
+
+        section.append(header, ul);
+        listEl.appendChild(section);
+      });
+    }
+
+    function saveEdit(i) {
+      const t = document.getElementById('edit-title-' + i)?.value.trim();
+      const u = document.getElementById('edit-url-'   + i)?.value.trim();
+      const m = document.getElementById('edit-memo-'  + i)?.value.trim();
+      if (!t || !u) return;
+      items[i].title = t;
+      items[i].url   = u;
+      items[i].memo  = m;
+      editIdx = null;
+      save();
+      render();
+    }
+
     function addItem() {
+      const group = groupInput.value.trim();
       const title = titleInput.value.trim();
       const url   = urlInput.value.trim();
+      const memo  = memoInput.value.trim();
       if (!title || !url) {
         alert('タイトルとURLの両方を入力してください');
         return;
       }
-      items.push({ title, url, watched: false });
+      items.push({ group, title, url, memo, watched: false });
       save();
       render();
       titleInput.value = '';
       urlInput.value   = '';
+      memoInput.value  = '';
       titleInput.focus();
     }
 
