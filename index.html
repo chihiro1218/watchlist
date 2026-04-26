@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>視聴リスト</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      padding: 32px;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    h1 { font-size: 1.5rem; margin-bottom: 24px; color: #1a1a2e; }
+
+    .form {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .form input {
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form input:focus { border-color: #4f8ef7; }
+
+    .form button {
+      padding: 10px;
+      background: #4f8ef7;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .form button:hover { background: #3a7de0; }
+
+    ul { list-style: none; }
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 6px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    li:last-child { border-bottom: none; }
+
+    li input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      cursor: pointer;
+      accent-color: #4f8ef7;
+    }
+
+    .title {
+      flex: 1;
+      font-size: 0.95rem;
+      color: #333;
+      word-break: break-all;
+    }
+
+    .title.watched {
+      text-decoration: line-through;
+      color: #aaa;
+    }
+
+    .open-btn {
+      padding: 6px 12px;
+      background: #4f8ef7;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+
+    .open-btn:hover { background: #3a7de0; }
+
+    .open-btn:disabled {
+      background: #ccc;
+      cursor: default;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 3px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      transition: color 0.15s;
+    }
+
+    .delete-btn:hover { color: #e55; }
+
+    .footer {
+      margin-top: 16px;
+      font-size: 0.85rem;
+      color: #aaa;
+      text-align: right;
+    }
+
+    .empty {
+      text-align: center;
+      color: #bbb;
+      padding: 32px 0;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>視聴リスト</h1>
+
+    <div class="form">
+      <input type="text" id="title-input" placeholder="タイトル（例：ドラマA 第1話）" />
+      <input type="url"  id="url-input"   placeholder="URL（例：https://tver.jp/...）" />
+      <button onclick="addItem()">追加</button>
+    </div>
+
+    <ul id="watch-list"></ul>
+    <p class="empty" id="empty-msg">リストに番組がありません</p>
+
+    <div class="footer" id="count-msg"></div>
+  </div>
+
+  <script>
+    const titleInput = document.getElementById('title-input');
+    const urlInput   = document.getElementById('url-input');
+    const list       = document.getElementById('watch-list');
+    const emptyMsg   = document.getElementById('empty-msg');
+    const countMsg   = document.getElementById('count-msg');
+
+    let items = JSON.parse(localStorage.getItem('watchlist') || '[]');
+
+    function save() {
+      localStorage.setItem('watchlist', JSON.stringify(items));
+    }
+
+    function render() {
+      list.innerHTML = '';
+      emptyMsg.style.display = items.length === 0 ? 'block' : 'none';
+
+      const unwatched = items.filter(i => !i.watched).length;
+      countMsg.textContent = items.length > 0 ? `未視聴 ${unwatched} / 全 ${items.length} 件` : '';
+
+      items.forEach((item, i) => {
+        const li = document.createElement('li');
+
+        const cb = document.createElement('input');
+        cb.type    = 'checkbox';
+        cb.checked = item.watched;
+        cb.title   = '視聴済みにする';
+        cb.onchange = () => { items[i].watched = cb.checked; save(); render(); };
+
+        const span = document.createElement('span');
+        span.className   = 'title' + (item.watched ? ' watched' : '');
+        span.textContent = item.title;
+
+        const openBtn = document.createElement('button');
+        openBtn.className   = 'open-btn';
+        openBtn.textContent = '開く';
+        openBtn.onclick     = () => window.open(item.url, '_blank');
+
+        const delBtn = document.createElement('button');
+        delBtn.className   = 'delete-btn';
+        delBtn.textContent = '✕';
+        delBtn.title       = '削除';
+        delBtn.onclick     = () => { items.splice(i, 1); save(); render(); };
+
+        li.append(cb, span, openBtn, delBtn);
+        list.appendChild(li);
+      });
+    }
+
+    function addItem() {
+      const title = titleInput.value.trim();
+      const url   = urlInput.value.trim();
+      if (!title || !url) {
+        alert('タイトルとURLの両方を入力してください');
+        return;
+      }
+      items.push({ title, url, watched: false });
+      save();
+      render();
+      titleInput.value = '';
+      urlInput.value   = '';
+      titleInput.focus();
+    }
+
+    urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') addItem(); });
+
+    render();
+  </script>
+</body>
+</html>
